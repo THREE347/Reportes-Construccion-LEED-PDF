@@ -75,11 +75,27 @@ textarea{height:72px;resize:none}
 .legend-dot{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;margin-bottom:6px}
 .dot-blue{width:13px;height:13px;border-radius:3px;background:#2563EB;flex-shrink:0}
 .dot-white{width:13px;height:13px;border-radius:3px;background:#fff;border:1.5px solid #d0d5d0;flex-shrink:0}
+#screen-access input:focus{border-color:#1D9E75;outline:none;box-shadow:0 0 0 3px rgba(29,158,117,0.15)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+
+<!-- ACCESO -->
+<div id="screen-access" class="screen active" style="padding-top:60px;text-align:center">
+  <div class="splash-icon"><i class="ti ti-lock"></i></div>
+  <h1 style="margin-bottom:6px">Reporte ESC + IAQ</h1>
+  <p style="font-size:13px;color:#777;margin-bottom:32px">Ingresa tu código de acceso para continuar</p>
+  <div class="card" style="text-align:left">
+    <label>Código de acceso</label>
+    <input type="text" id="access-code-input" placeholder="Ej. OBRA-2026-ABC" autocomplete="off" autocapitalize="characters"
+      style="letter-spacing:0.08em;font-weight:600"
+      onkeydown="if(event.key==='Enter') checkAccess()" />
+    <div id="access-error" style="color:#dc2626;font-size:12px;margin-top:6px;display:none">Código incorrecto. Verifica con tu administrador.</div>
+  </div>
+  <button class="btn btn-primary" style="margin-top:8px" onclick="checkAccess()">Entrar</button>
+</div>
 
 <!-- HOME -->
 <div id="screen-home" class="screen active" style="padding-top:24px">
@@ -210,6 +226,32 @@ textarea{height:72px;resize:none}
 <div id="pdf-render" style="position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:Arial,sans-serif;font-size:11px;padding:20px;box-sizing:border-box;z-index:-1"></div>
 
 <script>
+// ============================================================
+//  CÓDIGOS DE ACCESO — EDITA SOLO ESTA SECCIÓN
+//  Para AGREGAR un contratista: agrega una línea con su código entre comillas seguida de coma
+//  Para QUITAR un contratista: borra su línea completa o pon // al inicio para desactivarla
+//  Los códigos no distinguen mayúsculas/minúsculas ni espacios extra
+// ============================================================
+const ACCESS_CODES = [
+  'croca2026',   // Concretos roca
+  'THREE2026',   // THREE Prueba
+  'OBRA-2026-003',   // Contratista 3
+];
+// ============================================================
+
+function checkAccess(){
+  const input = document.getElementById('access-code-input').value.trim().toUpperCase();
+  const valid = ACCESS_CODES.map(c => c.toUpperCase());
+  if(valid.includes(input)){
+    sessionStorage.setItem('esc_access', 'ok');
+    document.getElementById('access-error').style.display = 'none';
+    showScreen('screen-home');
+  } else {
+    document.getElementById('access-error').style.display = 'block';
+    document.getElementById('access-code-input').focus();
+  }
+}
+
 const CONCEPTS = [
   {id:'c2',plan:'CAPP',oblig:true,icon:'ti-barrier-block',es:'Barrera perimetral',en:'Perimeter barrier',desc_es:'Instalación de barreras perimetrales continuas y sin rupturas para evitar que sedimentos acumulados, polvo o material suelto salgan del sitio.',desc_en:'Installation of continuous perimeter barriers without gaps to prevent accumulated sediments, dust, or loose material from leaving the site.'},
   {id:'c3',plan:'CAPP',oblig:true,icon:'ti-steering-wheel',es:'Lavadero de llantas',en:'Wheel washer',desc_es:'Limpieza y mantenimiento del lavadero de llantas para evitar que el lodo y polvo adherido a los neumáticos sea arrastrado fuera del sitio de construcción.',desc_en:'Cleaning and maintenance of the wheel washer to prevent mud and dust adhered to tires from being tracked outside the construction site.'},
@@ -663,6 +705,14 @@ updateCounter();
   document.getElementById(id).addEventListener('change', saveToStorage);
   document.getElementById(id).addEventListener('input', saveToStorage);
 });
+
+// Siempre pedir código al abrir la app
+// (sessionStorage se borra al cerrar el navegador, así que cada sesión nueva pide el código)
+if(sessionStorage.getItem('esc_access') !== 'ok'){
+  showScreen('screen-access');
+} else {
+  showScreen('screen-home');
+}
 </script>
 </body>
 </html>
